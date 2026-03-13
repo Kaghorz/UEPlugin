@@ -4,7 +4,7 @@
 #include "Interfaces/IPluginManager.h"
 #include "Misc/Paths.h"
 #include "SceneViewExtension.h"
-
+#include "ShaderCore.h"
 
 #define LOCTEXT_NAMESPACE "FFullScreenPassModule"
 

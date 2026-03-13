@@ -2,8 +2,56 @@
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/SceneTexturesCommon.ush"
 
+float FocusDepth;
+float FocusRangeDepth;
+float FocusEdgeDepth;
+uint Spherical;
+float SphereFieldOfView;
+float SphereFocusHorizontal;
+float SphereFocusVertical;
+float3 BlendColor;
+float BlendFactor;
+float EffectFactor;
 
-float Strenght;
+#ifndef M_PI
+#define M_PI 3.1415927
+#endif
+
+float GetNormalizedSceneDepth(float2 UV)
+{
+	const float DeviceDepth = LookupDeviceZ(UV);
+	return saturate(1.0f - DeviceDepth);
+}
+
+float CalculateDepthDiffCoC(float2 UV)
+{
+	const float SceneDepth = GetNormalizedSceneDepth(UV);
+	const float SceneFocus = FocusDepth;
+	const float DesaturateFullRange = FocusRangeDepth + FocusEdgeDepth;
+	float DepthDiff;
+
+	if (Spherical != 0u)
+	{
+		float2 PixelOffset;
+		PixelOffset.x = (UV.x - SphereFocusHorizontal) * View.BufferSizeAndInvSize.x;
+		PixelOffset.y = (UV.y - SphereFocusVertical) * View.BufferSizeAndInvSize.y;
+
+		const float DegreePerPixel = SphereFieldOfView / max(View.BufferSizeAndInvSize.x, 1.0f);
+		const float FovDifference = length(PixelOffset) * DegreePerPixel;
+		const float Radians = FovDifference * (2.0f * M_PI / 360.0f);
+
+		DepthDiff = sqrt(
+			(SceneDepth * SceneDepth) +
+			(SceneFocus * SceneFocus) -
+			(2.0f * SceneDepth * SceneFocus * cos(Radians)));
+	}
+	else
+	{
+		DepthDiff = abs(SceneDepth - SceneFocus);
+	}
+
+	return saturate((DepthDiff > DesaturateFullRange) ? 1.0f : smoothstep(FocusRangeDepth, DesaturateFullRange, DepthDiff));
+}
 
 void MainVS(
 	in float4 InPosition : ATTRIBUTE0,
@@ -18,8 +66,15 @@ float4 MainPS(
 	noperspective float4 UVAndScreenPos : TEXCOORD0
 	) : SV_Target0
 {
-	float2 uv = UVAndScreenPos.xy;
-    float4 res = CalcSceneColorAndDepth(uv);
-	
-    return saturate(float4(lerp(res.xyz, res.www*0.00001f, saturate(Strenght)), 1.f));
+	const float2 UV = UVAndScreenPos.xy;
+	const float4 SceneColorAndDepth = CalcSceneColorAndDepth(UV);
+	const float3 SceneColor = SceneColorAndDepth.rgb;
+
+	const float DepthDiffCoC = CalculateDepthDiffCoC(UV);
+	const float GreyscaleAverage = (SceneColor.r + SceneColor.g + SceneColor.b) / 3.0f;
+	float3 DesaturatedColor = float3(GreyscaleAverage, GreyscaleAverage, GreyscaleAverage);
+	DesaturatedColor = lerp(DesaturatedColor, BlendColor, BlendFactor);
+
+	const float3 OutputColor = lerp(SceneColor, DesaturatedColor, saturate(DepthDiffCoC * EffectFactor));
+	return float4(saturate(OutputColor), SceneColorAndDepth.a);
 }
