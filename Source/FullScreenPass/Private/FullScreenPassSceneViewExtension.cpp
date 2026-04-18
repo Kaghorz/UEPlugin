@@ -15,12 +15,12 @@ static TAutoConsoleVariable<int32> CVarEnabled(
 
 static TAutoConsoleVariable<float> CVarFocusDepth(
 	TEXT("r.FSP.Emphasize.FocusDepth"),
-	0.026f,
+	0.03f,
 	TEXT("Manual focus depth in [0, 1]."));
 
 static TAutoConsoleVariable<float> CVarFocusRangeDepth(
 	TEXT("r.FSP.Emphasize.FocusRangeDepth"),
-	0.001f,
+	0.93f,
 	TEXT("Focus range depth in [0, 1]."));
 
 static TAutoConsoleVariable<float> CVarFocusEdgeDepth(
@@ -70,7 +70,7 @@ static TAutoConsoleVariable<float> CVarBlendFactor(
 
 static TAutoConsoleVariable<float> CVarEffectFactor(
 	TEXT("r.FSP.Emphasize.EffectFactor"),
-	0.9f,
+	1.0f,
 	TEXT("Overall effect factor in [0, 1]."));
 
 
