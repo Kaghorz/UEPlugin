@@ -1,10 +1,12 @@
-# A template of Unreal Engine plugin
+# Unreal Engine plugin for desaturating what otherwise would have been blurred
 
 ## How to build
 
 1. Clone the repository to your machine
 2. Find `RunUAT.bat` (for Windows) or `RunUAT.sh` (for Linux/MacOS): `<Unreal engine path>/Engine/Build/BatchFiles`
 3. Build the plugin using `RunUAT`:
+
+! Important Note: Close your editor before building
 
 For Windows:
 ```powershell
